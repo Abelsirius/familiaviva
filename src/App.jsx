@@ -44,12 +44,13 @@ import {
 
 // Variables globales simuladas. Reemplazar con process.env o valores reales.
 const __firebase_config = window.__firebase_config || {
-  apiKey: "API_KEY_PLACEHOLDER",
-  authDomain: "project-id.firebaseapp.com",
-  projectId: "project-id",
-  storageBucket: "project-id.appspot.com",
-  messagingSenderId: "sender-id",
-  appId: "app-id"
+  apiKey: "AIzaSyBr_b-tS0N68na4yBa9vFoEi1KQQRUJ2rI",
+  authDomain: "familiaviva-6cc39.firebaseapp.com",
+  projectId: "familiaviva-6cc39",
+  storageBucket: "familiaviva-6cc39.firebasestorage.app",
+  messagingSenderId: "766772076704",
+  appId: "1:766772076704:web:bc5d6467a7f07b89f4e9c5",
+  measurementId: "G-9759BJTCZW"
 };
 const __app_id = window.__app_id || "familia_viva_app";
 const __initial_auth_token = window.__initial_auth_token || "";
@@ -234,8 +235,8 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 const ChatBubble = ({ message, isUser }) => (
   <div className={`flex w-full mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
     <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${isUser
-        ? 'bg-teal-500 text-white rounded-br-none'
-        : 'bg-slate-100 text-slate-700 rounded-bl-none'
+      ? 'bg-teal-500 text-white rounded-br-none'
+      : 'bg-slate-100 text-slate-700 rounded-bl-none'
       }`}>
       {message}
     </div>
