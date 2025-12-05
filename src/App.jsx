@@ -70,15 +70,15 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const callGeminiAPI = async (systemPrompt, userQuery, useGrounding = false) => {
   const apiKey = "AIzaSyD2ThwOu-r_neNFmzLoE0yGlXuLNhVl30U";
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const maxRetries = 5;
+  const maxRetries = 3;
 
+  // Modificado: Combinar systemPrompt con el mensaje para evitar errores de formato (400)
   const payload = {
-    contents: [{ parts: [{ text: userQuery }] }],
-    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ parts: [{ text: `${systemPrompt}\n\n${userQuery}` }] }],
   };
 
   if (useGrounding) {
-    payload.tools = [{ "google_search": {} }];
+    payload.tools = [{ googleSearchRetrieval: { dynamicRetrievalConfig: { mode: "MODE_DYNAMIC", dynamicThreshold: 0.7 } } }];
   }
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
