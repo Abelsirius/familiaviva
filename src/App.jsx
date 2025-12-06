@@ -68,7 +68,11 @@ const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'famili
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const callGeminiAPI = async (systemPrompt, userQuery, useGrounding = false) => {
-  const apiKey = "AIzaSyD2ThwOu-r_neNFmzLoE0yGlXuLNhVl30U";
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'TU_API_KEY_AQUI') {
+    console.error("Falta la API Key de Gemini. Configúrala en el archivo .env");
+    return { text: "Error de configuración: Falta la API Key. Por favor contacta al administrador.", sources: [] };
+  }
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const maxRetries = 3;
 
