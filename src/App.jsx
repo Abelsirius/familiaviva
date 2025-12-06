@@ -72,29 +72,28 @@ const callGeminiAPI = async (systemPrompt, userQuery, useGrounding = false) => {
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const maxRetries = 3;
 
-  // Modificado: Combinar systemPrompt con el mensaje para evitar errores de formato (400)
   const payload = {
-    contents: [{ parts: [{ text: `${systemPrompt}\n\n${userQuery}` }] }],
+    contents: [
+      {
+        role: "system",
+        parts: [{ text: systemPrompt }]
+      },
+      {
+        role: "user",
+        parts: [{ text: userQuery }]
+      }
+    ]
   };
-
-  if (useGrounding) {
-    payload.tools = [{ googleSearchRetrieval: { dynamicRetrievalConfig: { mode: "MODE_DYNAMIC", dynamicThreshold: 0.7 } } }];
-  }
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        if (response.status === 429 && attempt < maxRetries - 1) {
-          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-          await sleep(delay);
-          continue;
-        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -102,25 +101,12 @@ const callGeminiAPI = async (systemPrompt, userQuery, useGrounding = false) => {
       const candidate = result.candidates?.[0];
       const text = candidate?.content?.parts?.[0]?.text || "No se pudo generar una respuesta.";
 
-      let sources = [];
-      if (useGrounding) {
-        const groundingMetadata = candidate?.groundingMetadata;
-        if (groundingMetadata && groundingMetadata.groundingAttributions) {
-          sources = groundingMetadata.groundingAttributions
-            .map(attribution => ({
-              uri: attribution.web?.uri,
-              title: attribution.web?.title,
-            }))
-            .filter(source => source.uri && source.title);
-        }
-      }
-
-      return { text, sources };
+      return { text, sources: [] };
 
     } catch (error) {
       if (attempt === maxRetries - 1) {
         console.error("Gemini API failed after multiple retries:", error);
-        return { text: "Hubo un error al conectar con nuestro asistente. Intenta más tarde.", sources: [] };
+        return { text: "Error al conectar con el asistente.", sources: [] };
       }
     }
   }
