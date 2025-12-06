@@ -73,15 +73,14 @@ const callGeminiAPI = async (systemPrompt, userQuery, useGrounding = false) => {
     console.error("Falta la API Key de Gemini. Configúrala en el archivo .env");
     return { text: "Error de configuración: Falta la API Key. Por favor contacta al administrador.", sources: [] };
   }
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=${apiKey}`;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
   const maxRetries = 3;
 
   const payload = {
+    system_instruction: {
+      parts: [{ text: systemPrompt }]
+    },
     contents: [
-      {
-        role: "system",
-        parts: [{ text: systemPrompt }]
-      },
       {
         role: "user",
         parts: [{ text: userQuery }]
