@@ -33,6 +33,10 @@ import SleepWidget from './components/SleepWidget';
 import MagicMemoryModal from './components/MagicMemoryModal';
 import ChefWidget from './components/ChefWidget';
 import StoryWidget from './components/StoryWidget';
+import VoiceAssistant from './components/VoiceAssistant';
+import AchievementsPanel from './components/AchievementsPanel';
+import StreakBadge from './components/StreakBadge';
+import { calculateUserStats, getNewlyUnlocked } from './utils/achievementSystem';
 
 // --- CONFIGURACIÓN DE FIREBASE ---
 const firebaseConfig = window.__firebase_config || {
@@ -106,10 +110,37 @@ export default function FamiliaVivaApp() {
   const [isInsightLoading, setIsInsightLoading] = useState(false);
   const [weeklyMilestone, setWeeklyMilestone] = useState(null);
   const [isMilestoneLoading, setIsMilestoneLoading] = useState(false);
-  const [activeTool, setActiveTool] = useState(null); // 'cry_decoder', 'breathing', 'sleep_guru', 'magic_journal'
+  const [activeTool, setActiveTool] = useState(null);
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [unlockedAchievements, setUnlockedAchievements] = useState(() => {
+    const saved = localStorage.getItem('unlockedAchievements');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [toolUsage, setToolUsage] = useState(() => {
+    const saved = localStorage.getItem('toolUsage');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [voiceUsageCount, setVoiceUsageCount] = useState(() => {
+    const saved = localStorage.getItem('voiceUsageCount');
+    return saved ? parseInt(saved) : 0;
+  });
 
   // EDAD DEL BEBÉ
   const babyAge = "8 meses y 2 semanas";
+
+  // Save achievements to localStorage
+  useEffect(() => {
+    localStorage.setItem('unlockedAchievements', JSON.stringify(unlockedAchievements));
+  }, [unlockedAchievements]);
+
+  useEffect(() => {
+    localStorage.setItem('toolUsage', JSON.stringify(toolUsage));
+  }, [toolUsage]);
+
+  useEffect(() => {
+    localStorage.setItem('voiceUsageCount', voiceUsageCount.toString());
+  }, [voiceUsageCount]);
 
   // --- AUTENTICACIÓN ---
   useEffect(() => {
@@ -141,6 +172,22 @@ export default function FamiliaVivaApp() {
 
     return () => { unsubMood(); unsubChat(); };
   }, [user]);
+
+  // Check for newly unlocked achievements
+  useEffect(() => {
+    if (!user || moodHistory.length === 0) return;
+
+    const userStats = calculateUserStats(moodHistory, toolUsage, voiceUsageCount);
+    const newlyUnlocked = getNewlyUnlocked(userStats, unlockedAchievements);
+
+    if (newlyUnlocked.length > 0) {
+      setUnlockedAchievements(prev => [
+        ...prev,
+        ...newlyUnlocked.map(a => a.id)
+      ]);
+      // Could show a toast notification here
+    }
+  }, [moodHistory, toolUsage, voiceUsageCount, unlockedAchievements, user]);
 
   // --- LLM HELPERS ---
   const generateWeeklyMilestone = useCallback(async () => {
@@ -231,6 +278,30 @@ export default function FamiliaVivaApp() {
     setShowMoodModal(true);
   };
 
+  const handleVoiceCommand = (command) => {
+    // Track voice usage
+    setVoiceUsageCount(prev => prev + 1);
+
+    if (command.type === 'mood') {
+      const moodMap = {
+        verde: { color: 'green', message: 'Calma' },
+        ambar: { color: 'yellow', message: 'Estrés' },
+        rojo: { color: 'red', message: 'Sobrepasado' }
+      };
+      const mood = moodMap[command.value];
+      if (mood) {
+        handleMoodSelect(command.value, mood.color, mood.message);
+      }
+    } else if (command.type === 'tool') {
+      setActiveTool(command.value);
+      // Track tool usage
+      setToolUsage(prev => ({
+        ...prev,
+        [command.value]: (prev[command.value] || 0) + 1
+      }));
+    }
+  };
+
   // --- RENDER ---
   if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50 text-indigo-500 font-bold">Cargando...</div>;
   const userId = user?.uid || 'guest';
@@ -244,6 +315,12 @@ export default function FamiliaVivaApp() {
       </div>
 
       <Navbar handleLogout={() => signOut(auth)} userId={userId} />
+
+      {/* Streak Badge */}
+      <StreakBadge
+        streak={calculateUserStats(moodHistory, toolUsage, voiceUsageCount).currentGreenStreak}
+        onClick={() => setShowAchievements(true)}
+      />
 
       <main className="flex-1 overflow-y-auto w-full max-w-md mx-auto z-10 p-4 pb-24 scroll-smooth">
         {activeTab === 'home' && (
@@ -285,6 +362,26 @@ export default function FamiliaVivaApp() {
 
       {/* FLOATERS */}
       <ChatButton onClick={() => setShowQAchatModal(true)} />
+
+      {/* Voice Assistant Button */}
+      <button
+        onClick={() => setShowVoiceAssistant(true)}
+        className="fixed bottom-24 left-4 w-14 h-14 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-40 hover:scale-110"
+        title="Asistente de Voz"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+          <line x1="12" x2="12" y1="19" y2="22" />
+        </svg>
+      </button>
+
+      <VoiceAssistant
+        isOpen={showVoiceAssistant}
+        onClose={() => setShowVoiceAssistant(false)}
+        onCommand={handleVoiceCommand}
+      />
+
       <ChatModal
         showQAchatModal={showQAchatModal} setShowQAchatModal={setShowQAchatModal}
         chatHistory={chatHistory} chatInput={chatInput} setChatInput={setChatInput}
@@ -342,6 +439,13 @@ export default function FamiliaVivaApp() {
           const { text } = await callGeminiAPI(systemPrompt, `Tema: ${theme}. Personaje: ${char}`, false);
           return text;
         }}
+      />
+
+      <AchievementsPanel
+        isOpen={showAchievements}
+        onClose={() => setShowAchievements(false)}
+        unlockedAchievements={unlockedAchievements}
+        userStats={calculateUserStats(moodHistory, toolUsage, voiceUsageCount)}
       />
 
       <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
