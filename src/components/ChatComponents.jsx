@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Search, X, Loader, Send } from 'lucide-react';
 
 export function ChatButton({ onClick }) {
     return (
-        <motion.button
+        <Motion.button
             whileHover={{ scale: 1.1, rotate: 5 }}
             whileTap={{ scale: 0.9 }}
             onClick={onClick}
@@ -12,7 +12,7 @@ export function ChatButton({ onClick }) {
             title="Asistente de Preguntas y Respuestas"
         >
             <MessageSquare size={28} />
-        </motion.button>
+        </Motion.button>
     );
 }
 
@@ -37,7 +37,7 @@ export function ChatModal({
     return (
         <AnimatePresence>
             {showQAchatModal && (
-                <motion.div
+                <Motion.div
                     initial={{ y: '100%' }}
                     animate={{ y: 0 }}
                     exit={{ y: '100%' }}
@@ -58,12 +58,12 @@ export function ChatModal({
                     <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
                         {chatHistory.length === 0 && (
                             <div className="text-center text-slate-400 p-8 pt-16 flex flex-col items-center">
-                                <motion.div
+                                <Motion.div
                                     animate={{ rotate: [0, 10, -10, 0] }}
                                     transition={{ repeat: Infinity, duration: 5, delay: 1 }}
                                 >
                                     <MessageSquare size={48} className="mb-4 text-sky-200" />
-                                </motion.div>
+                                </Motion.div>
                                 <p className="text-sm max-w-xs leading-relaxed">
                                     Pregúntale a nuestro asistente sobre cualquier duda de crianza 0-24 meses. Usamos información actualizada y con fuentes.
                                 </p>
@@ -71,15 +71,15 @@ export function ChatModal({
                         )}
 
                         {chatHistory.map((msg, index) => (
-                            <motion.div
+                            <Motion.div
                                 key={index}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div className={`max-w-[85%] p-4 rounded-2xl shadow-sm leading-relaxed ${msg.role === 'user'
-                                        ? 'bg-sky-100 text-sky-900 rounded-br-sm'
-                                        : 'bg-white text-slate-800 rounded-tl-sm border border-slate-100'
+                                    ? 'bg-sky-100 text-sky-900 rounded-br-sm'
+                                    : 'bg-white text-slate-800 rounded-tl-sm border border-slate-100'
                                     }`}>
                                     {msg.role === 'assistant' ? (
                                         <div className="whitespace-pre-wrap text-sm">
@@ -96,7 +96,7 @@ export function ChatModal({
                                         <p className="font-medium text-sm">{msg.text}</p>
                                     )}
                                 </div>
-                            </motion.div>
+                            </Motion.div>
                         ))}
                     </div>
 
@@ -110,16 +110,16 @@ export function ChatModal({
                             className="flex-1 p-4 border border-slate-200 rounded-full focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none shadow-sm text-sm"
                             disabled={isGenerating || isInsightLoading}
                         />
-                        <motion.button
+                        <Motion.button
                             whileTap={{ scale: 0.9 }}
                             type="submit"
                             className="p-4 rounded-full bg-sky-600 text-white hover:bg-sky-700 disabled:bg-slate-300 transition-colors shadow-lg shadow-sky-200"
                             disabled={isGenerating || isInsightLoading || !chatInput.trim()}
                         >
                             <Send size={20} />
-                        </motion.button>
+                        </Motion.button>
                     </form>
-                </motion.div>
+                </Motion.div>
             )}
         </AnimatePresence>
     );

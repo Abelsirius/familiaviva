@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
   signInAnonymously,
   onAuthStateChanged,
-  signInWithCustomToken,
+
   signOut
 } from 'firebase/auth';
 import {
@@ -15,9 +15,7 @@ import {
   orderBy,
   limit,
   onSnapshot,
-  serverTimestamp,
-  where,
-  getDocs
+  serverTimestamp
 } from 'firebase/firestore';
 
 // --- COMPONENTS ---
@@ -25,9 +23,16 @@ import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import Timeline from './components/Timeline';
 import Resources from './components/Resources';
+import Tools from './components/Tools';
 import MoodModal from './components/MoodModal';
 import { ChatButton, ChatModal } from './components/ChatComponents';
 import TabNavigation from './components/TabNavigation';
+import BreathingWidget from './components/BreathingWidget';
+import CryDecoder from './components/CryDecoder';
+import SleepWidget from './components/SleepWidget';
+import MagicMemoryModal from './components/MagicMemoryModal';
+import ChefWidget from './components/ChefWidget';
+import StoryWidget from './components/StoryWidget';
 
 // --- CONFIGURACIÓN DE FIREBASE ---
 const firebaseConfig = window.__firebase_config || {
@@ -45,26 +50,17 @@ const db = getFirestore(app);
 const appId = typeof window.__app_id !== 'undefined' ? window.__app_id : 'familia-viva-app';
 
 // --- UTILITY LLM API CALL ---
-const callGeminiAPI = async (systemPrompt, userQuery, useGrounding = false) => {
+const callGeminiAPI = async (systemPrompt, userQuery) => {
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey || apiKey === 'TU_API_KEY_AQUI') {
-    console.error("Falta la API Key de Gemini. Configúrala en el archivo .env");
-    return { text: "Error de configuración: Falta la API Key. Por favor contacta al administrador.", sources: [] };
+    return { text: "Error de configuración: Falta la API Key.", sources: [] };
   }
-  // Uso el modelo que detectamos que funciona
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
   const maxRetries = 3;
 
   const payload = {
-    system_instruction: {
-      parts: [{ text: systemPrompt }]
-    },
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: userQuery }]
-      }
-    ]
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: "user", parts: [{ text: userQuery }] }]
   };
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -74,31 +70,19 @@ const callGeminiAPI = async (systemPrompt, userQuery, useGrounding = false) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       const result = await response.json();
-      const candidate = result.candidates?.[0];
-      const text = candidate?.content?.parts?.[0]?.text || "No se pudo generar una respuesta.";
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "No se pudo generar respuesta.";
 
-      // Si se usa Grounding, aquí se extraerían las fuentes (simulado por ahora si la API no devuelve citationMetadata de la misma forma)
-      // En v1beta standard, citationMetadata suele estar en candidate.citationMetadata
       const sources = [];
-      if (candidate?.citationMetadata?.citationSources) {
-        candidate.citationMetadata.citationSources.forEach(s => {
+      if (result.candidates?.[0]?.citationMetadata?.citationSources) {
+        result.candidates[0].citationMetadata.citationSources.forEach(s => {
           if (s.uri) sources.push({ title: 'Fuente Externa', uri: s.uri });
         });
       }
-
       return { text, sources };
-
-    } catch (error) {
-      if (attempt === maxRetries - 1) {
-        console.error("Gemini API failed after multiple retries:", error);
-        return { text: "Error al conectar con el asistente. Intenta más tarde.", sources: [] };
-      }
+    } catch {
+      if (attempt === maxRetries - 1) return { text: "Error de conexión.", sources: [] };
       await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
     }
   }
@@ -122,26 +106,17 @@ export default function FamiliaVivaApp() {
   const [isInsightLoading, setIsInsightLoading] = useState(false);
   const [weeklyMilestone, setWeeklyMilestone] = useState(null);
   const [isMilestoneLoading, setIsMilestoneLoading] = useState(false);
+  const [activeTool, setActiveTool] = useState(null); // 'cry_decoder', 'breathing', 'sleep_guru', 'magic_journal'
 
-  // EDAD DEL BEBÉ (Hardcoded para el ejemplo)
+  // EDAD DEL BEBÉ
   const babyAge = "8 meses y 2 semanas";
 
-  // --- AUTENTICACIÓN Y CARGA DE DATOS ---
+  // --- AUTENTICACIÓN ---
   useEffect(() => {
     const initAuth = async () => {
-      try {
-        if (typeof window.__initial_auth_token !== 'undefined' && window.__initial_auth_token) {
-          await signInWithCustomToken(auth, window.__initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (error) {
-        console.error("Error en autenticación inicial:", error);
-        await signInAnonymously(auth).catch(e => console.error("Error en fallback anónimo:", e));
-      }
+      await signInAnonymously(auth).catch(e => console.error(e));
     };
     initAuth();
-
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -149,271 +124,132 @@ export default function FamiliaVivaApp() {
     return () => unsubscribe();
   }, []);
 
-  // --- Cargar Historial de Ánimo y Chat ---
+  // --- DATOS ---
   useEffect(() => {
     if (!user) return;
-
-    // Mood Logs
     const moodRef = collection(db, 'artifacts', appId, 'users', user.uid, 'mood_logs');
     const qMood = query(moodRef, orderBy('timestamp', 'desc'), limit(7));
-
-    const unsubscribeMood = onSnapshot(qMood, (snapshot) => {
-      const logs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().timestamp ? doc.data().timestamp.toDate().toLocaleDateString() : 'N/A'
-      }));
+    const unsubMood = onSnapshot(qMood, (snapshot) => {
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), date: doc.data().timestamp?.toDate().toLocaleDateString() }));
       setMoodHistory(logs);
-      if (logs.length > 0) {
-        const lastLog = logs[0];
-        const logDate = lastLog.timestamp ? lastLog.timestamp.toDate().toDateString() : new Date().toDateString();
-        const today = new Date().toDateString();
-        if (logDate === today) {
-          setCurrentMood(lastLog.mood);
-        }
-      }
-    }, (error) => console.error("Error fetching mood logs:", error));
+      if (logs.length > 0 && logs[0].date === new Date().toLocaleDateString()) setCurrentMood(logs[0].mood);
+    });
 
-    // Historial de Chat (Máximo 10)
     const chatRef = collection(db, 'artifacts', appId, 'users', user.uid, 'qa_chat_history');
     const qChat = query(chatRef, orderBy('timestamp', 'asc'), limit(20));
+    const unsubChat = onSnapshot(qChat, (snap) => setChatHistory(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 
-    const unsubscribeChat = onSnapshot(qChat, (snapshot) => {
-      const history = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setChatHistory(history);
-    }, (error) => console.error("Error fetching chat history:", error));
-
-    return () => {
-      unsubscribeMood();
-      unsubscribeChat();
-    };
+    return () => { unsubMood(); unsubChat(); };
   }, [user]);
 
-  // --- LLM FUNCTIONS ---
-
+  // --- LLM HELPERS ---
   const generateWeeklyMilestone = useCallback(async () => {
     if (!user) return;
     setIsMilestoneLoading(true);
-    try {
-      const systemPrompt = "Eres un psicólogo de desarrollo infantil y coach de crianza. Analiza la edad del bebé. Genera un hito de desarrollo o habilidad que el bebé esté adquiriendo *esta semana* (en 1 frase). Luego, sugiere una actividad de apego o estimulación sencilla y específica que refuerce ese hito (en 1 frase). Responde con un tono positivo y de celebración. Responde solo con el hito y la actividad.";
-      const userQuery = `Mi bebé tiene ${babyAge}. ¿Cuál es el hito de desarrollo clave para esta semana y cómo puedo reforzarlo?`;
-      const { text: result } = await callGeminiAPI(systemPrompt, userQuery, false);
-      setWeeklyMilestone(result);
-    } catch (error) {
-      console.error("Error generando el hito semanal:", error);
-      setWeeklyMilestone("Lo sentimos, no pudimos generar tu hito semanal. Intenta de nuevo.");
-    }
+    const systemPrompt = "Eres un psicólogo de desarrollo infantil. Genera un hito de desarrollo para la edad indicada (1 frase) y una actividad de estimulación (1 frase). Tono positivo.";
+    const { text } = await callGeminiAPI(systemPrompt, `Edad: ${babyAge}.`, false);
+    setWeeklyMilestone(text);
     setIsMilestoneLoading(false);
   }, [user, babyAge]);
 
   useEffect(() => {
-    if (user && activeTab === 'timeline' && !weeklyMilestone && !isMilestoneLoading) {
-      // Debounce simple o check para no llamar muchas veces si falla
-      generateWeeklyMilestone();
-    }
-  }, [user, activeTab, weeklyMilestone, isMilestoneLoading, generateWeeklyMilestone]);
+    if (user && activeTab === 'timeline' && !weeklyMilestone) generateWeeklyMilestone();
+  }, [user, activeTab, weeklyMilestone, generateWeeklyMilestone]);
 
 
   const generateEmotionalInsight = useCallback(async () => {
     if (!user) return;
     setIsInsightLoading(true);
-    setWeeklyInsight(null);
-    try {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const q = query(
-        collection(db, 'artifacts', appId, 'users', user.uid, 'mood_logs'),
-        orderBy('timestamp', 'desc'),
-        where('timestamp', '>=', sevenDaysAgo)
-      );
-      const snapshot = await getDocs(q);
-      const logs = snapshot.docs.map(doc => ({
-        mood: doc.data().mood,
-        date: doc.data().timestamp ? doc.data().timestamp.toDate().toLocaleDateString() : 'Fecha N/A'
-      }));
-
-      if (logs.length === 0) {
-        setWeeklyInsight("No tienes suficientes registros de estado de ánimo esta semana. ¡Empieza a registrar para recibir tu análisis!");
-        setIsInsightLoading(false);
-        return;
-      }
-
-      const moodSummary = logs.reduce((acc, log) => {
-        acc[log.mood] = (acc[log.mood] || 0) + 1;
-        return acc;
-      }, { verde: 0, ambar: 0, rojo: 0 });
-
-      const dataString = `Resumen de ánimo de los últimos ${logs.length} registros: Calma (verde): ${moodSummary.verde} días, Estrés (ambar): ${moodSummary.ambar} días, SOS (rojo): ${moodSummary.rojo} días.`;
-      const systemPrompt = "Eres un coach de bienestar para padres, con un tono cálido y empático. Analiza el resumen de datos de ánimo. Proporciona una conclusión de bienestar breve (1 frase) y un consejo proactivo, práctico y no invasivo para la próxima semana (1 frase). No uses la palabra 'LLM'. Responde solo con el resumen y el consejo.";
-      const userQuery = `Analiza el siguiente resumen de ánimo de los últimos 7 días y genera una conclusión y un consejo:\n${dataString}`;
-      const { text: result } = await callGeminiAPI(systemPrompt, userQuery, false);
-      setWeeklyInsight(result);
-    } catch (error) {
-      console.error("Error generando el informe de bienestar:", error);
-      setWeeklyInsight("Lo sentimos, no pudimos generar tu informe semanal en este momento. Intenta de nuevo.");
-    }
+    const moodSummary = moodHistory.reduce((acc, log) => { acc[log.mood] = (acc[log.mood] || 0) + 1; return acc; }, { verde: 0, ambar: 0, rojo: 0 });
+    const dataString = `Calma: ${moodSummary.verde}, Estrés: ${moodSummary.ambar}, SOS: ${moodSummary.rojo}.`;
+    const systemPrompt = "Coach de bienestar para padres. Analiza el resumen y da un consejo breve y práctico.";
+    const { text } = await callGeminiAPI(systemPrompt, dataString, false);
+    setWeeklyInsight(text);
     setIsInsightLoading(false);
-  }, [user]);
+  }, [user, moodHistory]);
 
-  const askPedagogue = useCallback(async (question) => {
+  const askPedagogue = async (question) => {
     if (!user || !question.trim()) return;
-    const userMessage = { role: 'user', text: question.trim(), timestamp: serverTimestamp() }; // Local display timestamp is enough usually but we strictly use Firestore for history
-
-    // Optimistic UI update
-    setChatHistory(prev => [...prev, { role: 'user', text: question.trim() }, { role: 'assistant', text: '...' }]);
     setChatInput('');
+    setIsGenerating(true);
+    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'qa_chat_history'), { role: 'user', text: question, timestamp: serverTimestamp() });
 
-    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'qa_chat_history'), {
-      role: 'user',
-      text: question.trim(),
-      timestamp: serverTimestamp()
-    });
+    try {
+      const systemPrompt = "Pedagogo Asistente experto. Responde conciso (max 100 palabras). Cita fuentes.";
+      const { text, sources } = await callGeminiAPI(systemPrompt, question, true);
 
-    const systemPrompt = "Eres un Pedagogo Asistente, experto en desarrollo 0-24 meses. Responde concisa y empáticamente. Usa información actualizada (Grounding) y cita tus fuentes al final en un formato simple (ej: Fuente: [Título del Artículo]). Limita la respuesta a un máximo de 150 palabras.";
-    const { text: llmResponseText, sources } = await callGeminiAPI(systemPrompt, question, true);
+      let finalText = text;
+      if (sources.length) finalText += "\n\nFuentes: " + sources.map(s => s.title).join(', ');
 
-    let formattedResponse = llmResponseText;
-    if (sources.length > 0) {
-      formattedResponse += "\n\n**Fuentes Consultadas:**\n";
-      sources.forEach((source) => {
-        formattedResponse += `- [${source.title}](${source.uri})\n`;
-      });
+      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'qa_chat_history'), { role: 'assistant', text: finalText, timestamp: serverTimestamp() });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGenerating(false);
     }
-
-    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'qa_chat_history'), {
-      role: 'assistant',
-      text: formattedResponse,
-      sources: sources.map(s => ({ title: s.title, uri: s.uri })),
-      timestamp: serverTimestamp()
-    });
-    // La suscripción onSnapshot actualizará el chat, no necesitamos setear el estado manual aquí idealmente, pero para smooth UX está bien
-  }, [user]);
-
-
-  // --- GENERADORES PARA MODAL ---
-  const generateActivityTip = async () => {
-    setIsGenerating(true);
-    const systemPrompt = "Eres un psicólogo especialista en desarrollo infantil temprano y apego. Tu respuesta debe ser una actividad práctica, sencilla, que promueva el vínculo y la estimulación. Limítate a 4 frases concisas y usa un tono positivo y alentador.";
-    const userQuery = `Genera una actividad de juego de 5 minutos para un bebé de ${babyAge}. Enfócate en el apego seguro.`;
-    const { text: result } = await callGeminiAPI(systemPrompt, userQuery, false);
-    setModalContent(prev => ({ ...prev, llmText: result, action: "¡Actividad lista!", color: "bg-green-100 text-green-800" }));
-    setIsGenerating(false);
   };
-
-  const generateEmotionalRespite = async () => {
-    setIsGenerating(true);
-    const systemPrompt = "Eres un coach emocional y psicoterapeuta. Tu tarea es ofrecer validación emocional, normalización del sentimiento y UNA única técnica de afrontamiento inmediata (ej. beber agua, respiración cuadrada) en 4 líneas. Usa un tono de contención y empatía.";
-    const userQuery = "Estoy sintiendo que estoy sobrepasado y que no puedo más con la crianza.";
-    const { text: result } = await callGeminiAPI(systemPrompt, userQuery, false);
-    setModalContent(prev => ({ ...prev, llmText: result, action: "¡Toma un respiro!", color: "bg-red-100 text-red-800" }));
-    setIsGenerating(false);
-  };
-
 
   // --- HANDLERS ---
   const handleMoodSelect = async (mood, color, message) => {
     if (!user) return;
-    try {
-      await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'mood_logs'), {
-        mood: mood,
-        color: color,
-        timestamp: serverTimestamp(),
-        note: message
+    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'mood_logs'), { mood, color, timestamp: serverTimestamp(), note: message });
+    setCurrentMood(mood);
+
+    // Logic for specific moods
+    if (mood === 'rojo') {
+      setModalContent({
+        mood,
+        title: "¡ALTO! Te escuchamos.",
+        body: "Estás sobrepasado/a y es válido sentirse así. Antes de contactar al especialista, toma un Respiro Emocional guiado.",
+        action: "breath", // Special action
+        actionLabel: "Recibir Respiro Emocional ✨",
+        color: "bg-red-50 text-red-800",
+        llmFunction: () => { setShowMoodModal(false); setActiveTool('breathing'); }
       });
-      setCurrentMood(mood);
-
-      let feedback = {};
-      if (mood === 'verde') {
-        feedback = {
-          title: "¡Día de Calma!",
-          body: "Estás en un buen momento. ¡Aprovecha para fortalecer el apego!",
-          action: "Generar Actividad ✨",
-          color: "bg-green-100 text-green-800",
-          llmFunction: generateActivityTip,
-          llmText: null,
-          actionLabel: "Generar Actividad de Apego ✨",
-          mood: 'verde'
-        };
-      } else if (mood === 'ambar') {
-        feedback = {
-          title: "Respira un momento",
-          body: "Parece que hay un poco de estrés. Es normal. Tómate 3 minutos para ti antes de continuar.",
-          action: "Ver Recursos",
-          color: "bg-amber-100 text-amber-800",
-          llmFunction: null,
-          llmText: null,
-          actionLabel: "Ver Biblioteca",
-          mood: 'ambar'
-        };
-      } else if (mood === 'rojo') {
-        feedback = {
-          title: "¡ALTO! Te escuchamos.",
-          body: "Estás sobrepasado/a y es válido sentirse así. Antes de contactar al especialista, toma un Respiro Emocional guiado.",
-          action: "Respiro Emocional ✨",
-          color: "bg-red-100 text-red-800",
-          llmFunction: generateEmotionalRespite,
-          llmText: null,
-          actionLabel: "Recibir Respiro Emocional ✨",
-          mood: 'rojo'
-        };
-      }
-      setModalContent(feedback);
-      setShowMoodModal(true);
-    } catch (error) {
-      console.error("Error saving mood:", error);
+    } else if (mood === 'ambar') {
+      setModalContent({
+        mood,
+        title: "Momento de Pausa",
+        body: "Estás sintiendo estrés. Es una señal de que necesitas un momento para ti.",
+        action: "breath",
+        actionLabel: "Hacer Pausa de 1 Minuto",
+        color: "bg-amber-50 text-amber-800",
+        llmFunction: () => { setShowMoodModal(false); setActiveTool('breathing'); }
+      });
+    } else {
+      // Verde
+      setModalContent({
+        mood,
+        title: "¡Qué bien!",
+        body: "Mantener la calma es un superpoder. ¿Quieres guardar este momento?",
+        action: "magic",
+        actionLabel: "Guardar Recuerdo Mágico",
+        color: "bg-green-50 text-green-800",
+        llmFunction: () => { setShowMoodModal(false); setActiveTool('magic_journal'); }
+      });
     }
+    setShowMoodModal(true);
   };
-
-  const handleChatSubmit = (e) => {
-    e.preventDefault();
-    if (chatInput.trim() && !isGenerating) {
-      askPedagogue(chatInput);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      await signInAnonymously(auth);
-      setWeeklyInsight(null);
-      setWeeklyMilestone(null);
-      setMoodHistory([]);
-      setChatHistory([]);
-      setActiveTab('home');
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
-  };
-
 
   // --- RENDER ---
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen bg-slate-50 text-indigo-500 font-bold">Cargando Familia Viva...</div>;
-  }
-
-  const userId = user?.uid || 'ID de Invitado';
-  const displayUserName = user?.email ? user.email.split('@')[0] : 'Papá/Mamá';
-  const isAnonymousUser = auth.currentUser?.isAnonymous;
+  if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50 text-indigo-500 font-bold">Cargando...</div>;
+  const userId = user?.uid || 'guest';
+  const displayUserName = user?.email?.split('@')[0] || 'Papá/Mamá';
 
   return (
-    <div className="relative flex flex-col h-screen font-sans text-slate-800 overflow-hidden bg-slate-50 selection:bg-indigo-200">
-
-      {/* BACKGROUND ELEMENTS */}
+    <div className="relative flex flex-col h-screen font-sans text-slate-800 overflow-hidden bg-slate-50">
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-100 blur-3xl opacity-50"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-sky-100 blur-3xl opacity-50"></div>
       </div>
 
-      <Navbar handleLogout={handleLogout} userId={userId} />
+      <Navbar handleLogout={() => signOut(auth)} userId={userId} />
 
-      <main className="flex-1 overflow-y-auto w-full max-w-md mx-auto z-10 p-4 scroll-smooth">
+      <main className="flex-1 overflow-y-auto w-full max-w-md mx-auto z-10 p-4 pb-24 scroll-smooth">
         {activeTab === 'home' && (
           <Dashboard
             displayUserName={displayUserName}
-            isAnonymousUser={isAnonymousUser}
+            isAnonymousUser={auth.currentUser?.isAnonymous}
             userId={userId}
             weeklyInsight={weeklyInsight}
             isInsightLoading={isInsightLoading}
@@ -421,7 +257,12 @@ export default function FamiliaVivaApp() {
             moodHistory={moodHistory}
             currentMood={currentMood}
             handleMoodSelect={handleMoodSelect}
+            // Dashboard buttons still work OR we remove them. Let's keep them as quick access for now, but handleToolOpen also works for Tools tab
+            handleToolOpen={setActiveTool}
           />
+        )}
+        {activeTab === 'tools' && (
+          <Tools handleToolOpen={setActiveTool} />
         )}
         {activeTab === 'timeline' && (
           <Timeline
@@ -432,32 +273,78 @@ export default function FamiliaVivaApp() {
           />
         )}
         {activeTab === 'resources' && (
-          <Resources />
+          <Resources
+            onGenerateResource={async (category, title, context) => {
+              const systemPrompt = "Experto en contenido parental. Genera una guía práctica en Markdown.";
+              const { text } = await callGeminiAPI(systemPrompt, `Contexto: ${context}. Titulo: ${title}`, false);
+              return text;
+            }}
+          />
         )}
       </main>
 
+      {/* FLOATERS */}
       <ChatButton onClick={() => setShowQAchatModal(true)} />
-
       <ChatModal
-        showQAchatModal={showQAchatModal}
-        setShowQAchatModal={setShowQAchatModal}
-        chatHistory={chatHistory}
-        chatInput={chatInput}
-        setChatInput={setChatInput}
-        handleChatSubmit={handleChatSubmit}
+        showQAchatModal={showQAchatModal} setShowQAchatModal={setShowQAchatModal}
+        chatHistory={chatHistory} chatInput={chatInput} setChatInput={setChatInput}
+        handleChatSubmit={(e) => { e.preventDefault(); askPedagogue(chatInput); }}
         isGenerating={isGenerating}
-        isInsightLoading={isInsightLoading}
+      />
+      <MoodModal showMoodModal={showMoodModal} setShowMoodModal={setShowMoodModal} modalContent={modalContent} />
+
+      {/* WIDGETS */}
+      {activeTool === 'breathing' && <BreathingWidget onClose={() => setActiveTool(null)} />}
+
+      <CryDecoder
+        isOpen={activeTool === 'cry_decoder'} onClose={() => setActiveTool(null)}
+        onAnalyze={async (symptoms) => {
+          const systemPrompt = "Pediatra experto. Analiza llanto. Return JSON {cause, solution}.";
+          const { text } = await callGeminiAPI(systemPrompt, `Sintomas: ${symptoms.join(',')}`, false);
+          try { return JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim()); }
+          catch { return { cause: "Desconocido", solution: "Intenta calmarlo." }; }
+        }}
       />
 
-      <MoodModal
-        showMoodModal={showMoodModal}
-        setShowMoodModal={setShowMoodModal}
-        modalContent={modalContent}
-        isGenerating={isGenerating}
+      <SleepWidget
+        isOpen={activeTool === 'sleep_guru'} onClose={() => setActiveTool(null)}
+        onGetSleepTip={async () => {
+          const { text } = await callGeminiAPI("Experto en sueño infantil. Dame un tip corto para la rutina de sueño de un bebé de 8 meses.", "Tip rápido", false);
+          return text;
+        }}
+      />
+
+      <MagicMemoryModal
+        isOpen={activeTool === 'magic_journal'} onClose={() => setActiveTool(null)}
+        onMagicify={async (input) => {
+          const systemPrompt = "Eres un poeta experto en storytelling. Reescribe este recuerdo parental breve como una pequeña historia mágica, tierna y memorable (max 50 palabras).";
+          const { text } = await callGeminiAPI(systemPrompt, input, false);
+          if (user) {
+            addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'magic_memories'), { original: input, magic: text, timestamp: serverTimestamp() });
+          }
+          return text;
+        }}
+      />
+
+      <ChefWidget
+        isOpen={activeTool === 'chef'} onClose={() => setActiveTool(null)}
+        onGenerateRecipe={async (ingredients, type) => {
+          const systemPrompt = "Nutricionista infantil experto. Genera una receta segura, paso a paso y nutricionalmente balanceada para un bebé de 8 meses. Usa formato Markdown.";
+          const { text } = await callGeminiAPI(systemPrompt, `Ingredientes disponibles: ${ingredients}. Estilo: ${type}`, false);
+          return text;
+        }}
+      />
+
+      <StoryWidget
+        isOpen={activeTool === 'storyteller'} onClose={() => setActiveTool(null)}
+        onGenerateStory={async (theme, char) => {
+          const systemPrompt = "Cuentacuentos infantil. Escribe un cuento corto (150 palabras) relajante para antes de dormir. Usa lenguaje sensorial y calmado. Markdown.";
+          const { text } = await callGeminiAPI(systemPrompt, `Tema: ${theme}. Personaje: ${char}`, false);
+          return text;
+        }}
       />
 
       <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-
     </div>
   );
 }

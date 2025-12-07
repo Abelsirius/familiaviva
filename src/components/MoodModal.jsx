@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Zap, Loader, X } from 'lucide-react';
 
 export default function MoodModal({
@@ -11,13 +11,13 @@ export default function MoodModal({
     return (
         <AnimatePresence>
             {showMoodModal && modalContent && (
-                <motion.div
+                <Motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
                 >
-                    <motion.div
+                    <Motion.div
                         initial={{ scale: 0.9, opacity: 0, y: 20 }}
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -41,7 +41,7 @@ export default function MoodModal({
 
                             {/* Contenido LLM Generado */}
                             {modalContent.llmText && (
-                                <motion.div
+                                <Motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     className="p-4 mb-6 rounded-2xl bg-slate-50 border border-slate-100 text-sm text-slate-700 whitespace-pre-line shadow-inner"
@@ -51,12 +51,12 @@ export default function MoodModal({
                                         Asistente de Crianza:
                                     </p>
                                     {modalContent.llmText}
-                                </motion.div>
+                                </Motion.div>
                             )}
 
                             <div className="flex flex-col gap-3">
                                 {modalContent.llmFunction && (
-                                    <motion.button
+                                    <Motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={modalContent.llmFunction}
@@ -77,7 +77,7 @@ export default function MoodModal({
                                                 {modalContent.actionLabel}
                                             </>
                                         )}
-                                    </motion.button>
+                                    </Motion.button>
                                 )}
 
                                 <button
@@ -88,8 +88,8 @@ export default function MoodModal({
                                 </button>
                             </div>
                         </div>
-                    </motion.div>
-                </motion.div>
+                    </Motion.div>
+                </Motion.div>
             )}
         </AnimatePresence>
     );

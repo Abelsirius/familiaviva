@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { Play, Book, Headphones, Users } from 'lucide-react';
 
 export default function Resources() {
@@ -17,16 +17,16 @@ export default function Resources() {
     };
 
     return (
-        <motion.div
+        <Motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="space-y-6 pb-24"
         >
-            <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="mb-6">
+            <Motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="mb-6">
                 <h2 className="text-2xl font-bold text-slate-800">Biblioteca de Apoyo</h2>
                 <p className="text-slate-500">Recursos curados para tu bienestar</p>
-            </motion.div>
+            </Motion.div>
 
             <div className="grid gap-4">
                 <ResourceCard
@@ -55,7 +55,7 @@ export default function Resources() {
                 />
             </div>
 
-            <motion.div
+            <Motion.div
                 variants={itemVariants}
                 className="bg-gradient-to-r from-indigo-500 to-indigo-700 p-6 rounded-3xl mt-6 text-white text-center shadow-lg relative overflow-hidden"
             >
@@ -63,21 +63,21 @@ export default function Resources() {
                 <Users className="mx-auto mb-3 opacity-80" size={32} />
                 <h3 className="font-bold text-lg mb-2">¿Necesitas ayuda experta?</h3>
                 <p className="text-sm opacity-90 mb-4 px-4">Agenda una sesión híbrida con nuestros psicólogos perinatales.</p>
-                <motion.button
+                <Motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="bg-white text-indigo-600 text-sm py-3 px-6 rounded-xl font-bold shadow-md hover:bg-slate-50 transition-colors"
                 >
                     Contactar Especialista
-                </motion.button>
-            </motion.div>
-        </motion.div>
+                </Motion.button>
+            </Motion.div>
+        </Motion.div>
     );
 }
 
 function ResourceCard({ category, title, desc, tag, icon, color }) {
     return (
-        <motion.div
+        <Motion.div
             variants={{
                 hidden: { y: 20, opacity: 0 },
                 visible: { y: 0, opacity: 1 }
@@ -96,6 +96,6 @@ function ResourceCard({ category, title, desc, tag, icon, color }) {
                 <h4 className="font-bold text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors">{title}</h4>
                 <p className="text-sm text-slate-500 leading-snug">{desc}</p>
             </div>
-        </motion.div>
+        </Motion.div>
     )
 }

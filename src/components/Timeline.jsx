@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 import { Clock, Baby, Smile, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 
 export default function Timeline({
@@ -19,23 +19,23 @@ export default function Timeline({
     };
 
     return (
-        <motion.div
+        <Motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="space-y-6 pb-24"
         >
-            <motion.div
+            <Motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="bg-sky-50 p-6 rounded-3xl border border-sky-100 mb-4 shadow-sm"
             >
                 <h2 className="text-xl font-bold text-sky-900">Tu Acompañante 0-24</h2>
                 <p className="text-sm text-sky-700 mt-1">Guía basada en la Teoría del Apego</p>
-            </motion.div>
+            </Motion.div>
 
             {/* Hito Semanal Personalizado */}
-            <motion.div
+            <Motion.div
                 variants={itemVariants}
                 className="bg-white rounded-3xl p-6 shadow-md border border-sky-100 relative overflow-hidden"
             >
@@ -48,35 +48,35 @@ export default function Timeline({
                     </h3>
 
                     {weeklyMilestone ? (
-                        <motion.div
+                        <Motion.div
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: 'auto' }}
                             className="text-sm text-slate-700 whitespace-pre-line bg-sky-50/80 p-4 rounded-2xl border-l-4 border-sky-400 italic"
                         >
                             {weeklyMilestone}
-                        </motion.div>
+                        </Motion.div>
                     ) : isMilestoneLoading ? (
                         <div className="flex flex-col items-center justify-center py-6 text-sky-500 gap-2">
                             <Loader size={24} className="animate-spin" />
                             <span className="text-sm">Consultando al especialista...</span>
                         </div>
                     ) : (
-                        <motion.button
+                        <Motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={generateWeeklyMilestone}
                             className="w-full bg-sky-500 text-white text-sm py-4 rounded-2xl font-semibold hover:bg-sky-600 transition-colors shadow-lg shadow-sky-200"
                         >
                             Generar Hito Semanal ✨
-                        </motion.button>
+                        </Motion.button>
                     )}
                 </div>
-            </motion.div>
+            </Motion.div>
 
             {/* Hitos de Desarrollo Visuales */}
-            <motion.div variants={itemVariants} className="flex justify-center p-2 rounded-2xl overflow-hidden shadow-sm">
+            <Motion.div variants={itemVariants} className="flex justify-center p-2 rounded-2xl overflow-hidden shadow-sm">
                 <img src="https://placehold.co/600x200/e0f2fe/0284c7?text=Hitos+del+Desarrollo+0-24m" alt="Hitos" className="rounded-xl w-full object-cover" />
-            </motion.div>
+            </Motion.div>
 
             <div className="space-y-4 pt-2">
                 <TimelineItem
@@ -112,13 +112,13 @@ export default function Timeline({
                     delay={0.4}
                 />
             </div>
-        </motion.div>
+        </Motion.div>
     );
 }
 
 function TimelineItem({ age, title, desc, color, icon, delay }) {
     return (
-        <motion.div
+        <Motion.div
             initial={{ y: 20, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
             viewport={{ once: true }}
@@ -133,6 +133,6 @@ function TimelineItem({ age, title, desc, color, icon, delay }) {
                 <h4 className="font-bold text-lg mb-1">{title}</h4>
                 <p className="text-sm opacity-90 leading-relaxed">{desc}</p>
             </div>
-        </motion.div>
+        </Motion.div>
     );
 }

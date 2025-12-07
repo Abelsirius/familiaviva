@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Smile, Meh, Frown, BarChart2, Loader, Info, ClipboardList } from 'lucide-react';
+import { motion as Motion } from 'framer-motion';
+import { Smile, Meh, Frown, Loader, Info, ClipboardList } from 'lucide-react';
 
 export default function Dashboard({
     displayUserName,
@@ -30,24 +30,24 @@ export default function Dashboard({
     };
 
     return (
-        <motion.div
+        <Motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="space-y-6 pb-24"
         >
             {/* Saludo */}
-            <motion.div variants={itemVariants} className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+            <Motion.div variants={itemVariants} className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <HeartPattern />
                 </div>
                 <h2 className="text-3xl font-bold mb-2">Hola, {displayUserName}</h2>
                 <p className="opacity-90 text-base font-medium">¿Cómo te sientes hoy?</p>
-            </motion.div>
+            </Motion.div>
 
             {/* TARJETA DE AVISO (Si es Anónimo) */}
             {isAnonymousUser && (
-                <motion.div variants={itemVariants} className="bg-amber-50 rounded-2xl p-4 shadow-sm border border-amber-100 text-amber-800 flex items-start gap-3">
+                <Motion.div variants={itemVariants} className="bg-amber-50 rounded-2xl p-4 shadow-sm border border-amber-100 text-amber-800 flex items-start gap-3">
                     <Info size={20} className="text-amber-600 mt-0.5" />
                     <div>
                         <h3 className="font-semibold text-sm">Modo Invitado</h3>
@@ -55,11 +55,11 @@ export default function Dashboard({
                             Tu ID temporal es {userId.substring(0, 8)}... Los datos no se sincronizarán entre dispositivos.
                         </p>
                     </div>
-                </motion.div>
+                </Motion.div>
             )}
 
             {/* Semáforo Emocional INTERACTIVO */}
-            <motion.div variants={itemVariants} className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-white/50">
+            <Motion.div variants={itemVariants} className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-white/50">
                 <h3 className="font-semibold text-slate-700 mb-6 text-center text-lg">Tu Clima Emocional</h3>
 
                 <div className="flex justify-between gap-4">
@@ -91,32 +91,33 @@ export default function Dashboard({
                         onClick={() => handleMoodSelect('rojo', 'red', 'Sobrepasado')}
                     />
                 </div>
-            </motion.div>
+            </Motion.div>
 
             {/* Informe de Bienestar Semanal */}
-            <motion.div variants={itemVariants} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-                <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <BarChart2 size={24} className="text-indigo-500" />
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
-                        Tu Semana en Breve
-                    </span>
-                </h3>
+            <Motion.div variants={itemVariants} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+
+                {/* TRIBE MODE PULSE */}
+                <div className="flex items-center gap-2 mb-6 bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                    <div className="relative">
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-ping absolute inset-0"></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full relative z-10"></div>
+                    </div>
+                    <p className="text-xs font-medium text-indigo-800 flex-1">
+                        IA Wellness Assistant
+                    </p>
+                </div>
 
                 {weeklyInsight ? (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="text-sm text-slate-600 whitespace-pre-line bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 leading-relaxed"
-                    >
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm text-slate-600 leading-relaxed">
                         {weeklyInsight}
-                    </motion.div>
+                    </div>
                 ) : isInsightLoading ? (
                     <div className="flex flex-col items-center justify-center py-8 text-indigo-400 gap-3">
                         <Loader size={24} className="animate-spin" />
                         <span className="text-sm font-medium animate-pulse">La IA está analizando tus datos...</span>
                     </div>
                 ) : (
-                    <motion.button
+                    <Motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={generateEmotionalInsight}
@@ -124,19 +125,19 @@ export default function Dashboard({
                         className="w-full bg-slate-900 text-white text-sm py-4 rounded-2xl font-semibold hover:bg-slate-800 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg shadow-slate-200"
                     >
                         {moodHistory.length === 0 ? "Registra tu ánimo para ver el informe" : "Generar Análisis con IA ✨"}
-                    </motion.button>
+                    </Motion.button>
                 )}
-            </motion.div>
+            </Motion.div>
 
             {/* Historial Reciente */}
             {moodHistory.length > 0 && (
-                <motion.div variants={itemVariants} className="space-y-3 px-2">
+                <Motion.div variants={itemVariants} className="space-y-3 px-2">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-2">
                         <ClipboardList size={14} />
                         Últimos Registros
                     </h3>
                     {moodHistory.slice(0, 5).map((log, index) => (
-                        <motion.div
+                        <Motion.div
                             key={log.id}
                             initial={{ x: -20, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
@@ -150,17 +151,17 @@ export default function Dashboard({
                                     {log.timestamp ? log.timestamp.toDate().toLocaleDateString() : 'Hoy'}
                                 </p>
                             </div>
-                        </motion.div>
+                        </Motion.div>
                     ))}
-                </motion.div>
+                </Motion.div>
             )}
-        </motion.div>
+        </Motion.div>
     );
 }
 
 function MoodButton({ mood, icon, label, colorClass, lightClass, isActive, onClick }) {
     return (
-        <motion.button
+        <Motion.button
             whileHover={{ scale: 1.05, y: -5 }}
             whileTap={{ scale: 0.95 }}
             onClick={onClick}
@@ -174,14 +175,16 @@ function MoodButton({ mood, icon, label, colorClass, lightClass, isActive, onCli
             <span className={`text-xs font-bold ${isActive ? 'text-slate-800' : 'text-slate-500'}`}>{label}</span>
 
             {isActive && (
-                <motion.div
+                <Motion.div
                     layoutId="active-dot"
                     className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${colorClass} border-2 border-white`}
                 />
             )}
-        </motion.button>
+        </Motion.button>
     );
 }
+
+
 
 function HeartPattern() {
     return (

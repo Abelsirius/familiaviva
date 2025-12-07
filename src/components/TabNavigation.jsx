@@ -1,31 +1,37 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Heart, Calendar, BookOpen } from 'lucide-react';
+import { motion as Motion } from 'framer-motion';
+import { Home, Wrench, Activity, BookOpen } from 'lucide-react';
 
 export default function TabNavigation({ activeTab, setActiveTab }) {
     return (
-        <nav className="bg-white/90 backdrop-blur-lg border-t border-slate-100 p-2 pb-6 fixed bottom-0 w-full z-20 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)]">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-2 pb-6 z-40">
             <div className="flex justify-around items-center max-w-md mx-auto">
                 <TabButton
                     active={activeTab === 'home'}
                     onClick={() => setActiveTab('home')}
-                    icon={<Heart size={24} />}
-                    label="Hoy"
+                    icon={<Home size={24} />}
+                    label="Inicio"
+                />
+                <TabButton
+                    active={activeTab === 'tools'}
+                    onClick={() => setActiveTab('tools')}
+                    icon={<Wrench size={24} />}
+                    label="Herramientas"
                 />
                 <TabButton
                     active={activeTab === 'timeline'}
                     onClick={() => setActiveTab('timeline')}
-                    icon={<Calendar size={24} />}
-                    label="Etapas"
+                    icon={<Activity size={24} />}
+                    label="Línea"
                 />
                 <TabButton
                     active={activeTab === 'resources'}
                     onClick={() => setActiveTab('resources')}
                     icon={<BookOpen size={24} />}
-                    label="Biblioteca"
+                    label="Recursos"
                 />
             </div>
-        </nav>
+        </div>
     );
 }
 
@@ -35,19 +41,19 @@ function TabButton({ active, onClick, icon, label }) {
             onClick={onClick}
             className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all w-20 relative group`}
         >
-            <motion.div
+            <Motion.div
                 animate={active ? { y: -5 } : { y: 0 }}
                 className={`${active ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}
             >
                 {icon}
-            </motion.div>
+            </Motion.div>
 
             <span className={`text-[10px] font-bold transition-colors ${active ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
                 {label}
             </span>
 
             {active && (
-                <motion.div
+                <Motion.div
                     layoutId="tab-indicator"
                     className="absolute -bottom-2 w-1 mx-auto h-1 rounded-full bg-indigo-600"
                 />
