@@ -33,8 +33,8 @@ export default function Tools({ handleToolOpen }) {
             className="space-y-6 pb-24"
         >
             <Motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-800">Caja de Herramientas <Wrench className="inline text-slate-400 mb-1 ml-1" size={20} /></h2>
-                <p className="text-slate-500">Utilidades inteligentes para el día a día</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Caja de Herramientas <Wrench className="inline text-slate-400 dark:text-slate-500 mb-1 ml-1" size={20} /></h2>
+                <p className="text-slate-500 dark:text-slate-400">Utilidades inteligentes para el día a día</p>
             </Motion.div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -45,16 +45,16 @@ export default function Tools({ handleToolOpen }) {
                         whileHover={{ scale: 1.02, y: -2 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleToolOpen(tool.id)}
-                        className={`p-5 rounded-3xl flex flex-col items-start gap-3 border shadow-sm transition-all text-left ${tool.color} h-full`}
+                        className={`p-5 rounded-3xl flex flex-col items-start gap-3 border shadow-sm transition-all text-left ${tool.color} dark:bg-slate-700 dark:border-slate-600 h-full group`}
                     >
-                        <div className="bg-white/60 p-3 rounded-2xl backdrop-blur-sm">
+                        <div className="bg-white/60 dark:bg-slate-800/80 p-3 rounded-2xl backdrop-blur-sm">
                             {tool.icon}
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-800 text-lg leading-tight">{tool.label}</h3>
-                            <p className="text-xs font-medium opacity-80 mt-1">{tool.sub}</p>
+                            <h3 className="font-bold text-slate-800 dark:text-white text-lg leading-tight">{tool.label}</h3>
+                            <p className="text-xs font-medium opacity-80 dark:opacity-90 dark:text-slate-300 mt-1">{tool.sub}</p>
                         </div>
-                        <Sparkles size={16} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-current" />
+                        <Sparkles size={16} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-current dark:text-slate-300" />
                     </Motion.button>
                 ))}
             </div>

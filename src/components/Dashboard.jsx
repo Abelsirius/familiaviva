@@ -59,8 +59,8 @@ export default function Dashboard({
             )}
 
             {/* Semáforo Emocional INTERACTIVO */}
-            <Motion.div variants={itemVariants} className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-white/50">
-                <h3 className="font-semibold text-slate-700 mb-6 text-center text-lg">Tu Clima Emocional</h3>
+            <Motion.div variants={itemVariants} className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-sm rounded-3xl p-6 shadow-sm border border-white/50 dark:border-slate-700/50">
+                <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-6 text-center text-lg">Tu Clima Emocional</h3>
 
                 <div className="flex justify-between gap-4">
                     <MoodButton
@@ -94,25 +94,25 @@ export default function Dashboard({
             </Motion.div>
 
             {/* Informe de Bienestar Semanal */}
-            <Motion.div variants={itemVariants} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+            <Motion.div variants={itemVariants} className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
 
                 {/* TRIBE MODE PULSE */}
-                <div className="flex items-center gap-2 mb-6 bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                <div className="flex items-center gap-2 mb-6 bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-xl border border-indigo-100 dark:border-indigo-800">
                     <div className="relative">
-                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-ping absolute inset-0"></div>
-                        <div className="w-2 h-2 bg-indigo-500 rounded-full relative z-10"></div>
+                        <div className="w-2 h-2 bg-indigo-500 dark:bg-indigo-400 rounded-full animate-ping absolute inset-0"></div>
+                        <div className="w-2 h-2 bg-indigo-500 dark:bg-indigo-400 rounded-full relative z-10"></div>
                     </div>
-                    <p className="text-xs font-medium text-indigo-800 flex-1">
+                    <p className="text-xs font-medium text-indigo-800 dark:text-indigo-200 flex-1">
                         Asistente de Bienestar
                     </p>
                 </div>
 
                 {weeklyInsight ? (
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm text-slate-600 leading-relaxed">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                         {weeklyInsight}
                     </div>
                 ) : isInsightLoading ? (
-                    <div className="flex flex-col items-center justify-center py-8 text-indigo-400 gap-3">
+                    <div className="flex flex-col items-center justify-center py-8 text-indigo-400 dark:text-indigo-300 gap-3">
                         <Loader size={24} className="animate-spin" />
                         <span className="text-sm font-medium animate-pulse">La IA está analizando tus datos...</span>
                     </div>
@@ -122,7 +122,7 @@ export default function Dashboard({
                         whileTap={{ scale: 0.98 }}
                         onClick={generateEmotionalInsight}
                         disabled={moodHistory.length === 0}
-                        className="w-full bg-slate-900 text-white text-sm py-4 rounded-2xl font-semibold hover:bg-slate-800 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed shadow-lg shadow-slate-200"
+                        className="w-full bg-slate-900 dark:bg-indigo-600 text-white text-sm py-4 rounded-2xl font-semibold hover:bg-slate-800 dark:hover:bg-indigo-700 transition-colors disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed shadow-lg shadow-slate-200 dark:shadow-slate-900"
                     >
                         {moodHistory.length === 0 ? "Registra tu ánimo para ver el informe" : "Generar Análisis con IA ✨"}
                     </Motion.button>
@@ -166,18 +166,18 @@ function MoodButton({ mood, icon, label, colorClass, lightClass, isActive, onCli
             whileTap={{ scale: 0.95 }}
             onClick={onClick}
             className={`flex-1 flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300 relative
-                ${isActive ? `${lightClass} ring-2 ring-offset-2 ring-${mood === 'verde' ? 'green' : mood === 'ambar' ? 'amber' : 'red'}-400 shadow-md` : 'hover:bg-slate-50'}
+                ${isActive ? `${lightClass} dark:bg-slate-700/50 ring-2 ring-offset-2 dark:ring-offset-slate-900 ring-${mood === 'verde' ? 'green' : mood === 'ambar' ? 'amber' : 'red'}-400 shadow-md` : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'}
             `}
         >
-            <div className={`w-14 h-14 rounded-full ${colorClass} flex items-center justify-center text-white shadow-lg shadow-${mood === 'verde' ? 'green' : mood === 'ambar' ? 'amber' : 'red'}-200`}>
+            <div className={`w-14 h-14 rounded-full ${colorClass} flex items-center justify-center text-white shadow-lg shadow-${mood === 'verde' ? 'green' : mood === 'ambar' ? 'amber' : 'red'}-200 dark:shadow-none`}>
                 {icon}
             </div>
-            <span className={`text-xs font-bold ${isActive ? 'text-slate-800' : 'text-slate-500'}`}>{label}</span>
+            <span className={`text-xs font-bold ${isActive ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}`}>{label}</span>
 
             {isActive && (
                 <Motion.div
                     layoutId="active-dot"
-                    className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${colorClass} border-2 border-white`}
+                    className={`absolute -top-1 -right-1 w-4 h-4 rounded-full ${colorClass} border-2 border-white dark:border-slate-800`}
                 />
             )}
         </Motion.button>

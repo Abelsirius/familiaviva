@@ -4,7 +4,7 @@ import { Home, Wrench, Activity, BookOpen } from 'lucide-react';
 
 export default function TabNavigation({ activeTab, setActiveTab }) {
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-2 pb-6 z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 p-2 pb-6 z-40 transition-colors">
             <div className="flex justify-around items-center max-w-md mx-auto">
                 <TabButton
                     active={activeTab === 'home'}
@@ -43,19 +43,19 @@ function TabButton({ active, onClick, icon, label }) {
         >
             <Motion.div
                 animate={active ? { y: -5 } : { y: 0 }}
-                className={`${active ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}
+                className={`${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}
             >
                 {icon}
             </Motion.div>
 
-            <span className={`text-[10px] font-bold transition-colors ${active ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
+            <span className={`text-[10px] font-bold transition-colors ${active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300'}`}>
                 {label}
             </span>
 
             {active && (
                 <Motion.div
                     layoutId="tab-indicator"
-                    className="absolute -bottom-2 w-1 mx-auto h-1 rounded-full bg-indigo-600"
+                    className="absolute -bottom-2 w-1 mx-auto h-1 rounded-full bg-indigo-600 dark:bg-indigo-400"
                 />
             )}
         </button>

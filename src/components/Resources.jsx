@@ -24,8 +24,8 @@ export default function Resources() {
             className="space-y-6 pb-24"
         >
             <Motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-800">Biblioteca de Apoyo</h2>
-                <p className="text-slate-500">Recursos curados para tu bienestar</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Biblioteca de Apoyo</h2>
+                <p className="text-slate-500 dark:text-slate-400">Recursos curados para tu bienestar</p>
             </Motion.div>
 
             <div className="grid gap-4">
@@ -57,7 +57,7 @@ export default function Resources() {
 
             <Motion.div
                 variants={itemVariants}
-                className="bg-gradient-to-r from-indigo-500 to-indigo-700 p-6 rounded-3xl mt-6 text-white text-center shadow-lg relative overflow-hidden"
+                className="bg-gradient-to-r from-indigo-500 to-indigo-700 dark:from-indigo-600 dark:to-indigo-800 p-6 rounded-3xl mt-6 text-white text-center shadow-lg relative overflow-hidden"
             >
                 <div className="absolute top-0 left-0 w-full h-full bg-white opacity-5 pattern-dots"></div>
                 <Users className="mx-auto mb-3 opacity-80" size={32} />
@@ -66,7 +66,7 @@ export default function Resources() {
                 <Motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="bg-white text-indigo-600 text-sm py-3 px-6 rounded-xl font-bold shadow-md hover:bg-slate-50 transition-colors"
+                    className="bg-white text-indigo-600 dark:text-indigo-700 text-sm py-3 px-6 rounded-xl font-bold shadow-md hover:bg-slate-50 dark:hover:bg-slate-100 transition-colors"
                 >
                     Contactar Especialista
                 </Motion.button>
@@ -83,18 +83,18 @@ function ResourceCard({ category, title, desc, tag, icon, color }) {
                 visible: { y: 0, opacity: 1 }
             }}
             whileHover={{ y: -3, shadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
-            className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex gap-4 transition-shadow cursor-pointer group"
+            className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex gap-4 transition-shadow cursor-pointer group"
         >
-            <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+            <div className={`w-12 h-12 rounded-xl ${color} dark:opacity-90 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
                 {icon}
             </div>
             <div className="flex-1">
                 <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{category}</span>
-                    <span className="text-[10px] font-semibold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{tag}</span>
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{category}</span>
+                    <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">{tag}</span>
                 </div>
-                <h4 className="font-bold text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors">{title}</h4>
-                <p className="text-sm text-slate-500 leading-snug">{desc}</p>
+                <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{title}</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-snug">{desc}</p>
             </div>
         </Motion.div>
     )

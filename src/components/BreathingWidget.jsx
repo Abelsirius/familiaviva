@@ -32,7 +32,7 @@ export default function BreathingWidget({ onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-6 flex-col"
+            className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-6 flex-col"
         >
             <button onClick={onClose} className="absolute top-6 right-6 text-white/50 hover:text-white">
                 <X size={32} />
