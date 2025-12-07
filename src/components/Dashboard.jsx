@@ -103,7 +103,7 @@ export default function Dashboard({
                         <div className="w-2 h-2 bg-indigo-500 rounded-full relative z-10"></div>
                     </div>
                     <p className="text-xs font-medium text-indigo-800 flex-1">
-                        IA Wellness Assistant
+                        Asistente de Bienestar
                     </p>
                 </div>
 
